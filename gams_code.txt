@@ -1,0 +1,64 @@
+Model Transportation;
+
+
+
+sets i node /1*20/ ;
+     Alias(i,j);
+
+
+Free variable  z;
+Binary variable x;
+
+
+
+Table g(i,j) 'distance'
+
+$call =xls2gms r="time!a24:u44" i=C:\Users\ekerg\Downloads\asimetrik_data.xlsx o=table1.inc
+
+$include table1.inc
+
+;
+
+Parameter
+
+t(i,j);
+*g(i,j) = t(i,j);
+Parameter
+
+c(i,j);
+*g(i,j) = c(i,j);
+
+Equations
+
+time        objective function
+
+constraint1 (i)     xij =1    leave each city only once
+
+constraint2 (j)     xij =1    arrive at each city only once  ;
+
+*constraint3 (?)   subtour elimination ;
+
+
+time..        z=e=sum((i,j),x(i,j)*g(i,j));
+
+
+constraint1(i)..      sum((j)$(not sameas(i,j)),x(i,j)) =e= 1;
+
+constraint2(j)..      sum((i)$(not sameas(i,j)),x(i,j)) =e= 1;
+
+Set a(i,j) 'exclude first row and column';
+a(i,j) = ord(i) > 1 and ord(j) > 1;
+
+Variable u(i)     'subtour elimination strategy 3';
+
+Equation se(i,j) 'subtour elimination constraints';
+
+se(a(i,j)).. u(i) - u(j) + card(i)*x(i,j) =l= card(i) - 1;
+
+OPTION OPTCR = 0.007;
+
+model  Transportation /all/;
+
+solve Transportation using MIP minimizing z;
+
+display x.l,z.l;
